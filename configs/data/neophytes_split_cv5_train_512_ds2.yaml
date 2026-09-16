@@ -1,0 +1,20 @@
+# Fold 5 at HALF RESOLUTION -- "ds2" = downsampled by a factor of 2.
+# A ~1024 px window is resampled down to a 512 px crop, so the model sees the same
+# ground area as neophytes_split_cv5_train_1024 with a quarter of the pixels
+# (~4.6 instead of ~2.3 mm/px). Roughly 6x less GPU memory per sample and 4x less
+# work, at the cost of detail on the small herbs. See README section 4.
+#
+# Test it with neophytes_split_cv5_test_ds2 -- a model trained at half resolution
+# must be evaluated at half resolution, or every plant looks twice as large as in
+# training. test.py picks that config automatically from the data_name below.
+defaults:
+  - data
+  - neophytes_names_colors
+  - split_cv5
+  - transforms_512_ds2
+
+data_name: 'np_cv5_ds2'
+batch_size_train: 8
+batch_size_val: 2
+batch_size_test: 2
+num_workers: 8

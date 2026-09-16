@@ -1,0 +1,15 @@
+# Two sites only -- for quick iteration while changing code.
+defaults:
+  - data
+  - neophytes_names_colors
+  - split_debug
+  - transforms_1024
+
+data_name: 'np_debug'
+load_auxiliary: True
+weighted_sampling: False
+load_into_ram: False
+batch_size_train: 2
+batch_size_val: 2
+batch_size_test: 2
+num_workers: 4

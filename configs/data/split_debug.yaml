@@ -1,0 +1,10 @@
+image_dir:
+  train:
+    - '../data/Neophytes/2025/Sion_1_1/train'
+    - '../data/Neophytes/2025/Sion_1_2/train'
+  val:
+    - '../data/Neophytes/2025/Sion_1_1/val'
+    - '../data/Neophytes/2025/Sion_1_2/val'
+  test:
+    - '../data/Neophytes/2025/Sion_1_1/test'
+    - '../data/Neophytes/2025/Sion_1_2/test'

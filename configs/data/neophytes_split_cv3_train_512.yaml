@@ -1,0 +1,17 @@
+# Fold 3, half-size crops at the SAME resolution as neophytes_split_cv3_train_1024:
+# a ~512 px window of the tile instead of a ~1024 px one, not resampled. Plants keep
+# their size in pixels, only the context shrinks, and a training step needs roughly
+# 6x less GPU memory. See README section 4.
+#
+# The scale is unchanged, so this is tested with the normal neophytes_split_cv3_test.
+defaults:
+  - data
+  - neophytes_names_colors
+  - split_cv3
+  - transforms_512
+
+data_name: 'np_cv3'
+batch_size_train: 8
+batch_size_val: 2
+batch_size_test: 2
+num_workers: 8

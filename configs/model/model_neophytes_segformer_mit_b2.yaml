@@ -1,0 +1,6 @@
+# Same encoder as the baseline, but with SegFormer's own lightweight decoder.
+defaults:
+  - model
+
+model_name: SegFormer
+encoder_name: mit_b2

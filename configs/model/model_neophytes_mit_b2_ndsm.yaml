@@ -1,0 +1,12 @@
+# RGB + object height (nDSM = DSM - DTM), fused into the pretrained encoder at
+# every scale. Height separates the tall woody species (A. altissima, R. typhina)
+# from herbs that look similar from above.
+defaults:
+  - model
+
+name: ${model.model_name}_${model.encoder_name}_nDSM
+in_channels:
+  image: 3
+  ndsm: 1
+encoder_name: mit_b2
+fusion_mode: stem

@@ -1,0 +1,13 @@
+# Training split for cross-validation fold 2: every site except the four held out
+# in fold 2 (see cv_folds in neophytes_names_colors.yaml).
+defaults:
+  - data
+  - neophytes_names_colors
+  - split_cv2
+  - transforms_1024
+
+data_name: 'np_cv2'
+batch_size_train: 8
+batch_size_val: 2
+batch_size_test: 2
+num_workers: 8

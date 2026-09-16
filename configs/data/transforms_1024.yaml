@@ -1,0 +1,94 @@
+# # Transforms/Augmentations
+crop_size_train: 1024
+crop_size_train_tuple:
+  - ${data.crop_size_train}
+  - ${data.crop_size_train}
+interpolation: 2 # 0: cv2.INTER_NEAREST, 1: cv2.INTER_LINEAR, 2: cv2.INTER_CUBIC, 3: cv2.INTER_AREA, 4: cv2.INTER_LANCZOS4
+norm_mean: [0.485, 0.456, 0.406]
+norm_std: [0.229, 0.224, 0.225]
+
+train_transforms:
+  # Targeted crop: with targeted_prob the crop window is anchored on foreground.
+  # anchor_mode=spatial draws a uniform point and anchors on the nearest
+  # foreground pixel, so each labelled region is caught in proportion to its
+  # spatial extent (not its pixel count) -> small, sparse instances (e.g.
+  # Senecio dots) are no longer cropped out. Empty (background-only) images have
+  # no foreground and fall back to a plain random crop.
+  - type: TargetedRandomResizedCrop
+    params:
+      p: 1.0
+      size: ${data.crop_size_train_tuple}
+      scale: [0.2, 0.3] # ratio of input area: 0.25 for 1024x1024 -> [0.2, 0.3] (-> add +- a bit [~20%] for diversity)
+      ratio: [0.95, 1.05]
+      interpolation: ${data.interpolation}
+      targeted_prob: 0.95
+      anchor_mode: spatial
+      ignore_index: ${data.ignore_index}
+  - type: ColorJitter
+    params:
+      p: 0.5
+      brightness: 0.2
+      contrast: 0.2
+      saturation: 0.2
+      hue: 0.1
+  - type: CLAHE
+    params:
+      p: 0.5
+      clip_limit: 2
+  - type: RandomRotate90
+    params:
+      p: 1.0
+  - type: HorizontalFlip
+    params:
+      p: 0.5
+  - type: Normalize
+    params:
+      mean: ${data.norm_mean}
+      std: ${data.norm_std}
+
+val_transforms:
+  - type: Normalize
+    params:
+      mean: ${data.norm_mean}
+      std: ${data.norm_std}
+
+test_transforms:
+  - type: Normalize
+    params:
+      mean: ${data.norm_mean}
+      std: ${data.norm_std}
+      
+# # for DSM & DTM      
+dsm_transforms:
+  - type: Resize
+    params:
+      height: 2048
+      width: 2048
+      interpolation: 1
+      p: 1.0
+  - type: Normalize
+    params:
+      mean: 450
+      std: 50
+      max_pixel_value: 1.0
+
+# # for nDSM (= DSM - DTM, vegetation/object height)
+ndsm_transforms:
+  - type: Resize
+    params:
+      height: 2048
+      width: 2048
+      interpolation: 1
+      p: 1.0
+  - type: Normalize
+    params:
+      mean: 1.43
+      std: 3.10
+      max_pixel_value: 1.0
+
+transforms_additional_targets:
+  canopy: mask
+  phenology: mask
+  dsm: float_mask
+  dtm: float_mask
+  ndsm: float_mask

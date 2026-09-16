@@ -1,0 +1,45 @@
+# # Top-level training config. It picks one data config and one model config;
+# # everything else in the composed config can be overridden on the command line:
+# #   python train.py data=neophytes_split_cv1_train_1024 model=model_neophytes_mit_b4
+# #   python train.py model.lr=0.0002 data.batch_size_train=4
+defaults:
+  - _self_
+  - data: data
+  - model: model
+  # cv3 is the fold to iterate on, see README section 5
+  - override /data: neophytes_split_cv3_train_1024
+  - override /model: model_neophytes_mit_b2
+
+# # Run directory name. The timestamp keeps repeated runs of the same config apart,
+# # the seed suffix keeps the runs of a seed sweep apart (a multirun resolves ${now}
+# # once for the whole sweep, so without it the second job would find and resume the
+# # first one's last.ckpt).
+exp_name: ${now:%Y%m%d}_${now:%H%M%S.%f}_${data.data_name}_${model.name}_${data.crop_size_train}_s${pl_seed}
+# # To resume a crashed run, set exp_name to its directory: training picks up last.ckpt.
+
+# # Reproducibility
+pl_seed: 42               # False or a seed number
+deterministic_train: False  # True forces deterministic kernels (slower)
+
+# # Logging: 'wandb' (needs a Weights & Biases account: wandb login) or 'csv'
+# # (metrics.csv inside the run directory, no account needed).
+logger: csv
+log_name: ai4good-neophytes  # W&B project name
+
+log_dir: lightning_logs
+log_path: ${log_dir}/${exp_name}
+ckpt_path: ${log_path}/checkpoints
+
+# # LaTeX rendering for the figures. Set text.usetex to false if no TeX is installed.
+matplotlib_style:
+  text.usetex: false
+  font.family: serif
+
+hydra:
+  job:
+    name: train_neophyte_semseg
+  sweep:
+    dir: ${log_path}/hydra/multirun/${now:%Y-%m-%d-%H-%M-%S}
+    subdir: ${hydra.job.num}
+  run:
+    dir: ${log_path}/hydra/${now:%Y-%m-%d-%H-%M-%S}

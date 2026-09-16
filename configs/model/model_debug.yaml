@@ -1,0 +1,6 @@
+# Tiny + one epoch: for checking that the pipeline runs end to end.
+defaults:
+  - model
+
+max_epochs: 1
+encoder_name: tu-resnet18

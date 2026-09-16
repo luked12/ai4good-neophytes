@@ -1,0 +1,68 @@
+# # Model defaults. A model config (e.g. model_neophytes_mit_b2.yaml) composes this
+# # file and overrides the architecture, the inputs or the training schedule.
+
+name: ${model.model_name}_${model.encoder_name}  # goes into the run directory name
+
+# # Inputs: name -> channel count. The names must exist in the batch, so adding
+# # 'ndsm: 1' here makes train.py load the elevation rasters automatically.
+in_channels:
+  image: 3
+
+num_classes: 7        # 6 species + background
+img_size: ${data.crop_size_train}
+
+# # Architecture, see https://smp.readthedocs.io
+model_name: Unet      # Unet, Unet++, DeepLabV3+, SegFormer, DPT, UPerNet, MAnet, PAN
+encoder_name: mit_b2  # SMP encoder; prefix timm encoders with 'tu-' (tu-resnet50).
+                      # Not every encoder works with every decoder.
+
+# # How auxiliary channels (DSM/DTM/nDSM) enter the network:
+# #   concat = concatenated to RGB before the encoder. Simple, but the first conv
+# #            layer changes shape, so its pretrained weights are discarded.
+# #   stem   = RGB goes through the pretrained encoder untouched, the auxiliary
+# #            input is injected at every scale (ElevationFusion). Keeps the
+# #            pretrained weights, starts out identical to the RGB baseline.
+fusion_mode: concat
+
+# # Transformers have a fixed positional embedding, so val/test inputs must match
+# # the training size. True = split larger images into patches and stitch the
+# # predictions back together. False is recommended (fewer edge effects) whenever
+# # the encoder tolerates a different input size, which CNNs do.
+patch_2_img_size: False
+
+max_epochs: 50
+lr: 0.0001
+optimizer: AdamW      # AdamW or Adam
+loss: Focal           # Focal (down-weights the dominant background) or CE
+weight: null          # optional per-class loss weights, length = num_classes
+check_val_every_n_epoch: 1
+precision: 'bf16-mixed'  # 'bf16-mixed' (recommended), '16-mixed' (older GPUs), '32-true'
+
+lr_scheduler:
+  type: CosineAnnealingLR
+  params:
+    T_max: ${model.max_epochs}  # epochs for one full cosine cycle
+    eta_min: 1e-6               # minimum learning rate
+
+callbacks:
+  - type: LearningRateMonitor
+    params:
+      log_momentum: False
+  - type: EarlyStopping
+    params:
+      monitor: val_f1
+      min_delta: 0.001
+      # patience >= max_epochs disables early stopping: on the plateau val_f1 is a
+      # poor predictor of test performance, so stopping early mostly adds noise
+      # when folds are compared. Lower it if you are short on compute.
+      patience: 50
+      mode: max
+      verbose: True
+  - type: ModelCheckpoint
+    params:
+      monitor: val_f1
+      mode: max
+      save_last: True
+      save_top_k: 1
+      dirpath: ${ckpt_path}
+      filename: best_{epoch}

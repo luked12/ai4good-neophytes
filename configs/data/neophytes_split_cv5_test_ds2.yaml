@@ -1,0 +1,17 @@
+# Test split for fold 5 at HALF RESOLUTION ("ds2" = downsampled by a factor of 2)
+# -- the counterpart of neophytes_split_cv5_train_512_ds2. Whole tiles are
+# downsampled 2048 -> 1024 px so the test-time scale matches the training scale.
+defaults:
+  - data
+  - neophytes_names_colors
+  - split_cv5
+  - transforms_orig_ds2
+
+data_name: 'np_cv5_ds2'
+load_auxiliary: True
+load_dsm: True
+load_dtm: True
+load_ndsm: True
+weighted_sampling: False
+batch_size_test: 2
+num_workers: 8

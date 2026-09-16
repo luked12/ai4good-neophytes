@@ -1,0 +1,7 @@
+# Placeholder used by test.py: the architecture is restored from the checkpoint,
+# so nothing has to be specified here.
+defaults:
+  - model
+
+model_name: null
+encoder_name: null

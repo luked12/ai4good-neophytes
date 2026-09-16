@@ -1,0 +1,5 @@
+# Larger MiT encoder: better scores, ~2x the training time of b2.
+defaults:
+  - model
+
+encoder_name: mit_b4

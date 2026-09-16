@@ -1,0 +1,5 @@
+# Smallest MiT encoder: fastest to train, useful on a small GPU.
+defaults:
+  - model
+
+encoder_name: mit_b0

@@ -1,0 +1,5 @@
+# CNN baseline (timm ResNet-50) for comparison with the transformer encoders.
+defaults:
+  - model
+
+encoder_name: tu-resnet50

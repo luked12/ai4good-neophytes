@@ -1,0 +1,74 @@
+# # Test-time counterpart of transforms_512_ds2 ("ds2" = downsampled by a factor of 2):
+# # whole tiles at half resolution (2048 -> 1024 px), no cropping. Use it for models
+# # trained with transforms_512_ds2 so that test-time scale matches training scale.
+# #
+# # The metrics are then computed on a 1024x1024 label grid resampled with nearest
+# # neighbour: thin structures shrink or vanish, so the scores are close to, but not
+# # identical with, a full-resolution evaluation. Comparable between half-resolution
+# # runs; report final numbers at full resolution.
+crop_size_train: 1024  # used as img_size; test.py disables patching anyway
+crop_size_train_tuple:
+  - ${data.crop_size_train}
+  - ${data.crop_size_train}
+interpolation: 2 # 0: cv2.INTER_NEAREST, 1: cv2.INTER_LINEAR, 2: cv2.INTER_CUBIC, 3: cv2.INTER_AREA, 4: cv2.INTER_LANCZOS4
+norm_mean: [0.485, 0.456, 0.406]
+norm_std: [0.229, 0.224, 0.225]
+
+train_transforms:
+  - type: Normalize
+    params:
+      mean: ${data.norm_mean}
+      std: ${data.norm_std}
+
+val_transforms:
+  - type: Normalize
+    params:
+      mean: ${data.norm_mean}
+      std: ${data.norm_std}
+
+test_transforms:
+  - type: Resize
+    params:
+      height: 1024
+      width: 1024
+      interpolation: ${data.interpolation}
+      p: 1.0
+  - type: Normalize
+    params:
+      mean: ${data.norm_mean}
+      std: ${data.norm_std}
+
+# # for DSM & DTM (resampled to the tile size, then cropped together with the image)
+dsm_transforms:
+  - type: Resize
+    params:
+      height: 2048
+      width: 2048
+      interpolation: 1
+      p: 1.0
+  - type: Normalize
+    params:
+      mean: 450
+      std: 50
+      max_pixel_value: 1.0
+
+# # for nDSM (= DSM - DTM, vegetation/object height)
+ndsm_transforms:
+  - type: Resize
+    params:
+      height: 2048
+      width: 2048
+      interpolation: 1
+      p: 1.0
+  - type: Normalize
+    params:
+      mean: 1.43
+      std: 3.10
+      max_pixel_value: 1.0
+
+transforms_additional_targets:
+  canopy: mask
+  phenology: mask
+  dsm: float_mask
+  dtm: float_mask
+  ndsm: float_mask

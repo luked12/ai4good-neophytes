@@ -1,0 +1,12 @@
+# Test split matching neophytes_split_debug_1024.
+defaults:
+  - data
+  - neophytes_names_colors
+  - split_debug
+  - transforms_orig
+
+data_name: 'np_debug'
+load_auxiliary: True
+weighted_sampling: False
+batch_size_test: 2
+num_workers: 4

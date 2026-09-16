@@ -1,0 +1,11 @@
+# Same inputs as model_neophytes_mit_b2_ndsm, but the nDSM is concatenated to RGB
+# before the encoder -- the 4-channel stem cannot keep its pretrained weights.
+defaults:
+  - model
+
+name: ${model.model_name}_${model.encoder_name}_nDSM_concat
+in_channels:
+  image: 3
+  ndsm: 1
+encoder_name: mit_b2
+fusion_mode: concat

@@ -1,0 +1,40 @@
+# # Inference on whole orthophotos.
+# #   python inference.py exp_name=<run directory in lightning_logs/>
+# #   python inference.py data.patch_overlap=256 blending=gaussian
+
+exp_name: ???        # required: the run whose checkpoint is applied
+log_dir: lightning_logs
+ckpt_dir: ${log_dir}/${exp_name}/checkpoints
+out_dir: inference   # output GeoTiffs land in <out_dir>/<exp_name>/
+
+data:
+  # # Full orthophotos to predict (not tiles).
+  image_dir:
+    - '../data/Neophytes/2024/Basel_1_2/2024_06_25_Basel_1_2.tif'
+
+  patch_size: 1024
+  patch_overlap: 128  # must be even; larger = smoother borders, more patches
+  batch_size: 16      # lower it on GPU OOM
+  num_workers: 8      # 0 for debugging
+
+  # # Written into the GeoTiff metadata. Note that un-inferred pixels stay 0,
+  # # which is also the background class.
+  nodata: 255
+
+  # # Must match the normalization used during training.
+  test_transforms:
+    - type: Normalize
+      params:
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+blending: hard_crop  # 'hard_crop' (fast, default) or 'gaussian' (smooth seams, several GB RAM)
+
+# # Additionally write <stem>_uncertainty.tif with one float32 band holding the
+# # normalized predictive entropy (-sum_c p log p) / log K in [0, 1]: 0 where the
+# # model is certain, 1 where it spreads its probability over all classes.
+# # hard_crop only.
+uncertainty: False
+
+model:
+  ckpt_type: 'best'  # 'best' or 'last'

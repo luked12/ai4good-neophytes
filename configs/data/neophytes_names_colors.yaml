@@ -1,0 +1,46 @@
+classes:
+  0: { name: "Background", color: "#000000", stats_name: "background" }
+  1: { name: "B. davidii", color: "#dce14c", stats_name: "B_davidii" }
+  2: { name: "R. typhina", color: "#b76e44", stats_name: "R_typhina" }
+  3: { name: "R. japonica", color: "#305dc6", stats_name: "R_japonica" }
+  4: { name: "B. orientalis", color: "#e2256a", stats_name: "B_orientalis" }
+  5: { name: "S. inaequidens", color: "#50e3c2", stats_name: "S_inaequidens" }
+  6: { name: "A. altissima", color: "#dd60f6", stats_name: "A_altissima" }
+
+# Display order for plots: sorted by max plant height (tallest first)
+display_order: [6, 2, 1, 3, 4, 5]
+  
+growth_form_groups:
+  Trees:
+    classes: ["A. altissima", "R. typhina"]
+    color: "#1b9e77"   # Dark2 teal
+  Shrubs:
+    classes: ["B. davidii", "R. japonica"]
+    color: "#d95f02"   # Dark2 orange
+  Herbs:
+    classes: ["B. orientalis", "S. inaequidens"]
+    color: "#7570b3"   # Dark2 purple
+
+phenology_names:
+  - non-flowering
+  - flowering
+  - fruiting
+  
+canopy_names:
+  - '10'
+  - '20'
+  - '30'
+  - '40'
+  - '50'
+  - '60'
+  - '70'
+  - '80'
+  - '90'
+  - '100'
+
+cv_folds:
+  cv1: ["Arlesheim_1", "Dietikon_1", "Basel_3",    "Aarau_1"]
+  cv2: ["Aarau_3",     "Olten_1",    "Aarau_2",    "Ardon_3"]
+  cv3: ["Dornach_1",   "Rivera_1",   "Basel_2",    "Waltenschwil_1"]
+  cv4: ["Sion_1",      "Rivera_2",   "Dornach_2",  "Ardon_1"]
+  cv5: ["Chamoson_1",  "Ardon_2",    "Basel_4",    "Rueti_1"]

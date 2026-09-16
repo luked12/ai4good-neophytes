@@ -1,0 +1,5 @@
+# SegFormer MiT-b2 encoder in a U-Net decoder -- the default baseline.
+defaults:
+  - model
+
+encoder_name: mit_b2  # mit_b0-b5

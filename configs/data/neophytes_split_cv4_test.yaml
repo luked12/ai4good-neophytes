@@ -1,0 +1,16 @@
+# Test split for cross-validation fold 4: the four held-out sites, evaluated on
+# whole tiles (transforms_orig = normalization only, no cropping).
+defaults:
+  - data
+  - neophytes_names_colors
+  - split_cv4
+  - transforms_orig
+
+data_name: 'np_cv4'
+load_auxiliary: True   # canopy + phenology, for the per-condition breakdown
+load_dsm: True
+load_dtm: True
+load_ndsm: True        # shown in the qualitative figures
+weighted_sampling: False
+batch_size_test: 2
+num_workers: 8

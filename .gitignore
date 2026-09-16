@@ -1,0 +1,17 @@
+# generated output
+lightning_logs/
+wandb/
+results/
+inference/
+outputs/
+
+# python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+*.egg-info/
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
