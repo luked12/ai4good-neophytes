@@ -84,10 +84,7 @@ Neophytes/
     └── dtm/         16² float32, terrain model [m], from swisstopo swissALTI3D
 ```
 
-Site folders are `<site>_<flight>`: in `Basel_2_1` the site is `Basel_2`
-and `_1` is one flight over it, flown on one date. Several flights per site cover
-different points of the season. The cross-validation folds are defined on sites,
-so all flights of a site are held out together.
+Site folders are `<site>_<flight>`: in `Basel_2_1` the site is `Basel_2` and `_1` is one flight over it, flown on one date. Several flights per site cover different points of the season. The cross-validation folds are defined on sites, so all flights of a site are held out together.
 
 The label tile carries three bands:
 
@@ -97,31 +94,21 @@ The label tile carries three bands:
 | 2 | canopy density | `0` unknown, `10…100` percent cover in steps of 10 |
 | 3 | phenological phase | `0` unknown, `1` non-flowering, `2` flowering, `3` fruiting, `4` excluded |
 
-`254` and `255` are mapped to `ignore_index` (`-1`) by `value_mapping` in
-`configs/data/data.yaml`: those pixels contribute neither to the loss nor to any
-metric. Bands 2 and 3 are only loaded when `load_auxiliary: True`; they drive the
-per-condition breakdown in `test.py` ("how well is a species found while it
-flowers, and under a closed canopy?").
+`254` and `255` are mapped to `ignore_index` (`-1`) by `value_mapping` in `configs/data/data.yaml`: those pixels contribute neither to the loss nor to any metric. 
+Bands 2 and 3 are only loaded when `load_auxiliary: True`; they drive the per-condition breakdown in `test.py` ("how well is a species found while it flowers?").
 
-Elevation is optional. `nDSM = DSM − DTM` is the height of an object above the
-ground, an additional channel that carries information the orthophoto does not:
-how tall a plant is. The model configs
-`model_neophytes_mit_b2_ndsm.yaml` (fused into the pretrained encoder) and
-`model_neophytes_mit_b2_ndsm_concat.yaml` (concatenated to RGB) show both ways of
-feeding it in. Mind the resolutions: the DSM comes from the photogrammetric
-reconstruction at 1024² per tile, half the linear resolution of the orthophoto,
-while the DTM is
-[swissALTI3D](https://www.swisstopo.admin.ch/en/height-model-swissalti3d), the
-national terrain model of swisstopo at 0.5 m resolution, resampled onto the tile
-grid at 16² per tile.
-Both are interpolated up to the image grid. Nothing forces you to use them combined, `in_channels` can just as well ask for `dsm` or `dtm` alone.
+Elevation is optional. `nDSM = DSM − DTM` is the height of an object above the ground, an additional channel that carries information the orthophoto does not: how tall a plant is. The model configs
+`model_neophytes_mit_b2_ndsm.yaml` (fused into the pretrained encoder) and `model_neophytes_mit_b2_ndsm_concat.yaml` (concatenated to RGB) show both ways of feeding it in. 
+Mind the resolutions: the DSM comes from the photogrammetric reconstruction at 1024² per tile, half the linear resolution of the orthophoto, while the DTM is [swissALTI3D](https://www.swisstopo.admin.ch/en/height-model-swissalti3d), the national terrain model of swisstopo at 0.5 m resolution, resampled onto the tile grid at 16² per tile.
+Both are interpolated up to the image grid. 
+Nothing forces you to use them combined, `in_channels` can just as well ask for `dsm` or `dtm` alone.
 
 > `stats_imagewise.csv`
 > Table with one row per tile indicating the pixel count and area per class (split by phenological phase) and the size of the empty orthophoto margin. 
 > Weighted sampling and few-shot selection use it, so they never have to open a tile to know what is inside.
 > Regenerate it after adding / modifying tiles with `dataset_stats.py`
 
-### 2.2 Citizen-science data (optional, no code in this repo)
+### 2.2 Citizen-science data
 
 Two additional sources are provided as raw material. Whether and how to use them is up to you.
 
@@ -242,12 +229,9 @@ configs/
 
 ---
 
-## 7. A bit about hydra configs
+## 7. Configuration with Hydra
 
-`python train.py` reads exactly one file, `configs/train.yaml`. That file holds
-the run-level settings (experiment name, seed, logger, paths) and a `defaults`
-list naming one data config and one model config. Each of those is in turn only a
-`defaults` list, so the full config is assembled from seven files:
+`python train.py` reads exactly one file, `configs/train.yaml`. That file holds the run-level settings (experiment name, seed, logger, paths) and a `defaults` list naming one data config and one model config. Each of those is in turn only a `defaults` list, so the full config is assembled from seven files:
 
 ```
 python train.py
@@ -261,18 +245,13 @@ python train.py
         └── model.yaml                       architecture, inputs, loss, schedule, callbacks
 ```
 
-Everything a file pulls in lands under `data.*` or `model.*`, which is why
-overrides read like `data.batch_size_train=4` and `model.lr=0.0002`. Later entries
-in a `defaults` list win over earlier ones, a file's own keys win over everything
-it pulls in, and the command line wins over all of it. `test.yaml` and
-`inference.yaml` are built the same way.
+Everything a file pulls in lands under `data.*` or `model.*`, which is why overrides read like `data.batch_size_train=4` and `model.lr=0.0002`. 
+Later entries in a `defaults` list win over earlier ones, a file's own keys win over everything it pulls in, and the command line wins over all of it. 
+`test.yaml` and `inference.yaml` are built the same way.
 
-Swapping one line of a `defaults` list is therefore a whole experiment: the five
-CV folds differ only in their `split_cv<n>` entry, and the half-resolution configs
-of section 4 only in their `transforms_` entry. A new experiment often means
-writing a little new config, not touching code.
+Swapping one line of a `defaults` list is therefore a whole experiment: the five CV folds differ only in their `split_cv<n>` entry, and the half-resolution configs of section 4 only in their `transforms_` entry. A new experiment often means writing a little new config file, not touching code.
 
-Things worth knowing about the defaults:
+### Things worth knowing about the defaults:
 
 - **Class imbalance.** `weighted_sampling: inverse_image` draws a tile with a
   probability derived from how rare its rarest class is, counted per image rather
