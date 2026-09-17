@@ -1,11 +1,9 @@
 # AI4Good: Neophyte segmentation from drone orthophotos
 
-Invasive plant species are one of the main drivers of global biodiversity loss,
-which is why combating them is a target of the Sustainable Development Goals of
-the United Nations. Doing so depends on knowing where they grow, and
-segmenting high-resolution aerial imagery is currently the only promising way to
-detect them automatically over large areas. This repository maps six neophyte
-species per pixel in drone orthophotos, built with PyTorch:
+Invasive plant species are a main drivers of global biodiversity loss, which is why combating them is a target of the United Nations SDGs. 
+Doing so depends on knowing where they grow. 
+Segmenting high-resolution aerial imagery is currently the only promising way to detect them automatically over large areas. 
+This repository maps six neophyte species per pixel in drone orthophotos using semantic segmentation with PyTorch.
 
 ---
 
@@ -24,15 +22,11 @@ species per pixel in drone orthophotos, built with PyTorch:
 
 ## Key challenges
 
-The same species looks different from one site to the next: it is at another
-phenological stage, has different growing conditions, and grows into another background vegetation. A model can therefore score well on tiles from
-orthophotos it has seen and fail at a site one nearby, which makes
-cross-site generalisation the first key challenge.
+The same species looks different from one site to the next: it is at another phenological stage, has different growing conditions, and grows into another background vegetation. 
+A model can therefore work well on tiles from orthophotos it has seen and fail at a site one nearby, which makes cross-site generalisation the first key challenge.
 
-The second one is data scarcity. Annotating neophytes in nadir imagery is hard
-even for experts, and for a large number of invasive species there are no labels
-on high-resolution aerial imagery at all, which puts the task somewhere between
-few-shot and zero-shot segmentation.
+The second one is data scarcity. Annotating neophytes in nadir imagery is hard even for experts. 
+For a large number of invasive species there are no labels on high-resolution aerial imagery at all, which puts the task somewhere between few-shot and zero-shot segmentation.
 
 Methods that address these challenges are in high demand.
 
@@ -122,20 +116,12 @@ national terrain model of swisstopo at 0.5 m resolution, resampled onto the tile
 grid at 16² per tile.
 Both are interpolated up to the image grid. Nothing forces you to use them combined, `in_channels` can just as well ask for `dsm` or `dtm` alone.
 
-### 2.2 `stats_imagewise.csv`
+> `stats_imagewise.csv`
+> Table with one row per tile indicating the pixel count and area per class (split by phenological phase) and the size of the empty orthophoto margin. 
+> Weighted sampling and few-shot selection use it, so they never have to open a tile to know what is inside.
+> Regenerate it after adding / modifying tiles with `dataset_stats.py`
 
-One row per tile with the pixel count and area per class (split by phenological
-phase) and the size of the empty orthophoto margin. Weighted sampling, few-shot
-selection and the `max_nodata_frac` filter all read it, so they never have to
-open a tile to know what is inside.
-
-Regenerate it after adding / modifying tiles:
-
-```bash
-python dataset_stats.py --data-root ../data/Neophytes
-```
-
-### 2.3 Citizen-science data (optional, no code in this repo)
+### 2.2 Citizen-science data (optional, no code in this repo)
 
 Two additional sources are provided as raw material. Whether and how to use them is up to you.
 
@@ -157,13 +143,10 @@ NeophytesCSCutouts/                  ~6.6 GB
 ## 3. Quickstart
 
 ```bash
-# 1: does the pipeline run? two sites, one epoch, small model
-python train.py data=neophytes_split_debug_1024 model=model_debug
-
-# 2: a real run, random tile split inside every site (no unseen site)
+# 1: Random tile split inside every site (no unseen site)
 python train.py data=neophytes_split_local_train_1024 model=model_neophytes_mit_b2
 
-# 3: evaluate it (exp_name = the directory created under lightning_logs/)
+# 2: evaluate it (exp_name = the directory automatically created under lightning_logs/)
 python test.py exp_name=20260916_101500.123456_np_loc_Unet_mit_b2_1024_s42
 ```
 
@@ -171,104 +154,61 @@ Any config value can be overridden on the command line:
 
 ```bash
 python train.py model.lr=0.0002 model.max_epochs=30 data.batch_size_train=4
-python train.py data=neophytes_split_cv1_train_1024 model=model_neophytes_mit_b2_ndsm
+python train.py data=neophytes_split_cv3_train_1024 model=model_neophytes_mit_b2_ndsm
 ```
-
-Training writes to `lightning_logs/<exp_name>/`, evaluation to
-`lightning_logs/<exp_name>/test_<timestamp>_.../`. Metrics go to a CSV by
-default; set `logger=wandb` (after `wandb login`) for Weights & Biases.
 
 ---
 
-## 4. Faster experiments, and fitting on a small GPU
+## 4. Faster experiments fitting on a small GPU
 
-The default (1024 px crops, testing on whole 2048 px tiles) is what the final
-numbers should be produced with, but it is expensive, and with a MiT encoder it
-does not fit on a consumer GPU.
+The default (training on original resolution with 1024 crops during training) is expensive, and with a MiT encoder, it does not fit on a consumer GPU.
+Two different ways to speed things up:
 
-Two independent levers, both just a different data config:
-
-**(a) Smaller crops, same resolution** (`transforms_512`). The crop window is
+**(a) Smaller crops, same resolution**. The crop window is
 ~512 px of the original tile and is fed to the network at 512 px, so plants keep
 their size in pixels and only the context shrinks (cheap and low-risk)
 
 ```bash
-python train.py data=neophytes_split_cv3_train_512 model=model_neophytes_mit_b2
-python test.py exp_name=<run>   # the normal cv3 test split, nothing changes at test time
+python train.py data=neophytes_split_cv3_train_512
+python test.py exp_name=<run>   # auto-selects neophytes_split_cv3_test
 ```
 
-**(b) Half resolution** (`neophytes_split_cv<n>_train_512_ds2`, where **`ds2`
-stands for downsampled by a factor of 2**). A ~1024 px window is resampled down to a 512 px
+**(b) Half resolution**. A ~1024 px window is downsampled by a factor of 2 (ds2) down to a 512 px
 crop, so the model sees the same ground area as the default config with a quarter
-of the pixels, at roughly 4.6 mm/px instead of 2.3. Four times less work in both
-training and testing, at the price of detail: expect the small herbs
-(*B. orientalis*, *S. inaequidens*) to lose the most.
+of the pixels, at roughly 4.6 mm/px instead of 2.3 mm/px. Small neophytes lose the most accuracy.
 
 ```bash
-python train.py data=neophytes_split_cv3_train_512_ds2 model=model_neophytes_mit_b2
+python train.py data=neophytes_split_cv3_train_512_ds2
 python test.py exp_name=<run>   # auto-selects neophytes_split_cv3_test_ds2
 ```
 
-Resolution is the one setting that should match between training and testing: a
-model trained on half-resolution crops has to be evaluated on half-resolution
-tiles, or every plant appears twice as large as anything it saw during training.
-That is why the `_ds2` runs carry `np_cv<n>_ds2` in their `data_name` and `test.py`
-routes them to the matching `_test_ds2` config, which downsamples the tiles the
-same way. The scores are then computed on a 1024 px label grid resampled with
-nearest neighbour, so thin structures shrink or vanish: comparable *between*
-half-resolution runs, but report final numbers at full resolution.
+Resolution is the one setting that should match between training and testing: a model trained on half-resolution crops has to be evaluated on half-resolution tiles, or every plant appears twice as large as anything it saw during training.
+For the `_ds2` runs, scores are computed on a 1024 px label grid so very thin structures shrink or vanish: comparable *between* half-resolution runs, but report final numbers at full resolution.
 
-Crop size, in contrast, does **not** necessarily have to match. Many encoders (e.g. ResNets, MiT/SegFormer) are
-resolution-agnostic: ResNets are fully convolutional, and MiT/SegFormer
-deliberately has no positional embedding, so a model trained on 512 px crops runs on a whole
-2048 px tile unchanged. No test-time tiling is
-needed, which is why `patch_2_img_size` stays `False`. It exists for e.g.
-ViT-based architectures (`DPT`), where a fixed patch grid does tie the model to
-one input size.
+Crop size, in contrast, does **not** necessarily have to match. 
+Many encoders (e.g. ResNets, MiT/SegFormer) are resolution-agnostic: ResNets are fully convolutional, and MiT/SegFormer deliberately has no positional embedding, so a model trained on 512 px crops runs on a whole 2048 px tile unchanged. 
+No test-time tiling is needed, which is why `patch_2_img_size` stays `False`. 
+It is implemented for e.g. ViT-based architectures, where a fixed patch grid does tie the model to one input size.
 
-If a run still does not fit: lower `data.batch_size_train`, use `mit_b0` or a
-CNN encoder, and set `data.batch_size_test=1`, since the configured 2 already runs out of
-memory with `mit_b2` on 2048 px tiles on a 24 GB card.
+> If a run still does not fit: lower `data.batch_size_train` and `data.batch_size_val` , and/or use a smaller model.
 
 ---
 
-## 5. The metric that counts: F1 in cross-validation
+## 5. Main metric: F1 in cross-validation
 
-The interesting question is not how well a model does on tiles from orthophotos
-it has already seen, but whether it recognises a species **at a site it has never
-seen**.
+The interesting question is not how well a model does on tiles from orthophotos it has already seen, but whether it recognises a species **at a site it has never seen**.
 
-The five folds in `cv_folds` (`configs/data/neophytes_names_colors.yaml`) each
-hold out four sites; every site is held out exactly once. Train five models,
-evaluate each on its own held-out sites, and report the **mean ± std of the F1
-score over the folds, overall and per class**. That is the headline number of
-this project, and the one to compare methods on.
+The five folds in `cv_folds` (`configs/data/neophytes_names_colors.yaml`) each hold out four sites; every site is held out exactly once. 
+Train five models, evaluate each on its own held-out sites, and report the **mean ± std of the F1 score over the folds, overall and per class**.
+Use `python evaluate_cv.py` to calculate mean ± std across cv folds.
+It is the main metric of this project, and the one to compare methods on.
 
-```bash
-# train the five folds (each is a full training run)
-for i in 1 2 3 4 5; do
-  python train.py data=neophytes_split_cv${i}_train_1024 model=model_neophytes_mit_b2
-done
-
-# evaluate each fold on its held-out sites
-for run in lightning_logs/*np_cv*; do
-  python test.py exp_name=$(basename "$run")
-done
-
-# aggregate: the table, the CSV and the bar chart with error bars
-python evaluate_cv.py --runs '*np_cv*_mit_b2_*' --out results/cv/mit_b2
-```
+> Important: Report always the per-class F1 as well as the mean. The background class should be excluded from the calculation of the F1 average to better compare with methods, that do not use an additional background class.
 
 ### Iterating on a single fold
 
 Five full trainings per idea is a lot. For day-to-day experiments, run **`cv3`** (its score usually sits closest to the five-fold mean)
-and only do the full five-fold sweep once a method looks promising. Reference
-numbers from the Unet + MiT-b2 baseline (mean F1 without background, two seeds):
-
-Report always the per-class F1 as well as the mean: background aside, the six species
-are not equally hard. The two herbs are the small, sparse ones and usually
-dominate the error, and an average that hides them is easy to improve for the
-wrong reasons.
+and only do the full five-fold sweep once a method looks promising.
 
 ---
 
@@ -300,13 +240,9 @@ configs/
   model/   architectures, inputs, loss, schedule
 ```
 
-Generated output stays out of the repo: `lightning_logs/`, `results/`,
-`inference/` and `wandb/` are gitignored. Write your own scripts' output to
-`results/<topic>/`.
-
 ---
 
-## 7. How the configuration fits together
+## 7. A bit about hydra configs
 
 `python train.py` reads exactly one file, `configs/train.yaml`. That file holds
 the run-level settings (experiment name, seed, logger, paths) and a `defaults`
